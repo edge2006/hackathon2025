@@ -124,6 +124,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📧 Contact
 
-Your Name - [@YourTwitter](https://twitter.com/yourtwitter) - email@example.com
+Your Name - YOGESH KUMAR - strawhatyogii.com
 
-Project Link: [https://github.com/your-username/smart-certificate-verifier](https://github.com/your-username/smart-certificate-verifier)
+Project Link: [https://github.com/edge2006/hackathon2025](https://github.com/edge2006/hackathon2025)
