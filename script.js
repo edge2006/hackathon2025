@@ -227,9 +227,29 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- AUTHENTICATION & ROLES ---
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        loginError.classList.add('hidden');
+const handleLogin = async (e) => {
+    e.preventDefault();
+    loginError.classList.add('hidden');
+
+    // Add loading animation to submit button
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: e.target.email.value,
+                password: e.target.password.value
+            })
+        });
+
+        const data = await response.json();
+        ...
+
 
         // Add loading animation to submit button
         const submitBtn = e.target.querySelector('button[type="submit"]');
