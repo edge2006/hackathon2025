@@ -5,289 +5,699 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Certificate Verifier</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        // Apply theme on initial load to prevent flash of wrong theme
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    </script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { overflow-x: hidden; }
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-black font-sans text-gray-800 dark:text-gray-200">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <!-- Page Transition Overlay -->
+    <div id="page-transition" class="page-transition"></div>
 
     <!-- Animated Background for Login Page -->
     <div id="login-bg-animation" class="area">
-        <ul class="circles"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul>
+        <ul class="circles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
     </div>
 
-    <div id="app-container">
-        <nav id="navbar" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm py-2 px-6 sticky top-0 z-50 hidden">
-            <div class="container mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <button id="back-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hidden">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    </button>
-                    <div id="nav-brand" class="flex items-center space-x-3 cursor-pointer">
-                        <img src="https://placehold.co/200x50/3B82F6/FFFFFF?text=ProofPoint" alt="ProofPoint Logo" class="h-10">
+    <!-- Enhanced Navigation Bar -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg z-50 hidden navbar-slide-down">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo/Brand with animation -->
+                <div id="nav-brand" class="flex items-center space-x-3 animate-fade-in-left">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center animate-pulse">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
+                    <span class="text-xl font-bold text-gradient-animated">CertVerify</span>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span id="user-greeting" class="text-gray-600 dark:text-gray-300 text-sm hidden sm:block"></span>
+
+                <!-- Center Navigation -->
+                <div class="flex items-center space-x-6 animate-fade-in">
+                    <button id="upload-cert-btn" class="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors btn-hover-lift">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <span class="font-medium">Upload Document</span>
+                    </button>
+                </div>
+
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4 animate-fade-in-right">
+                    <span id="user-greeting" class="text-sm text-gray-600 dark:text-gray-400 font-medium"></span>
+
+                    <!-- Back Button -->
+                    <button id="back-btn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors btn-hover-lift hidden">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Menu Button -->
                     <div class="relative">
-                        <button id="menu-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                        <button id="menu-btn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors btn-hover-lift">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
                         </button>
-                        <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border dark:border-gray-700">
-                            <a href="#" id="menu-dashboard-link" class="hidden flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"></a>
-                            <a href="#" id="menu-history" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span>Verification History</span>
-                            </a>
-                             <a href="#" id="menu-theme-toggle" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"></a>
-                            <div class="border-t my-1 dark:border-gray-600"></div>
-                            <a href="#" id="logout-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                <span>Logout</span>
-                            </a>
+                        <!-- Dropdown Menu -->
+                        <div id="menu-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl hidden animate-slide-up">
+                            <div class="py-1">
+                                <button id="menu-theme-toggle" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left transition-colors interactive">
+                                    <span id="theme-icon" class="mr-3">🌙</span>
+                                    <span id="theme-text">Dark Mode</span>
+                                </button>
+                                <button id="menu-history" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left transition-colors interactive">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    History
+                                </button>
+                                <button id="menu-dashboard-link" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left transition-colors interactive hidden">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    Dashboard
+                                </button>
+                                <hr class="my-1 border-gray-200 dark:border-gray-700">
+                                <button id="logout-btn" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left transition-colors interactive">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <main class="container mx-auto px-4 py-8">
-            <section id="login-page">
-                 <div class="flex items-center justify-center min-h-[70vh]">
-                    <div class="w-full max-w-lg bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg animate-fade-in border dark:border-gray-700 z-10">
-                        <div class="text-center mb-8">
-                           <img src="https://placehold.co/200x50/3B82F6/FFFFFF?text=ProofPoint" alt="ProofPoint Logo" class="h-12 mx-auto mb-4">
-                           <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Authorized Login</h2>
-                           <p class="text-gray-500 dark:text-gray-400">Please enter your credentials to continue.</p>
+    <main class="relative z-10">
+        <!-- LOGIN PAGE -->
+        <section id="login-page" class="min-h-screen flex items-center justify-center px-4 relative z-20">
+            <div class="max-w-md w-full space-y-8 animate-bounce-in">
+                <!-- Login Card -->
+                <div class="bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20 dark:border-gray-700/20">
+                    <!-- Header -->
+                    <div class="text-center mb-8 animate-fade-in">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </div>
-                        <form id="login-form" class="space-y-6">
-                            <div class="relative group">
-                                <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent peer" value="employee@gov.in" required>
-                                <label for="email" class="absolute left-4 top-3 text-gray-500 dark:text-gray-400 transition-all transform peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:bg-white dark:peer-focus:bg-gray-800 peer-focus:px-1 peer-focus:text-blue-600 peer-valid:-translate-y-6 peer-valid:scale-75 peer-valid:bg-white dark:peer-valid:bg-gray-800 peer-valid:px-1">Email Address</label>
-                            </div>
-                            <div class="relative group">
-                                <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent peer" value="strongpassword123" required>
-                                <label for="password" class="absolute left-4 top-3 text-gray-500 dark:text-gray-400 transition-all transform peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:bg-white dark:peer-focus:bg-gray-800 peer-focus:px-1 peer-focus:text-blue-600 peer-valid:-translate-y-6 peer-valid:scale-75 peer-valid:bg-white dark:peer-valid:bg-gray-800 peer-valid:px-1">Password</label>
-                            </div>
-                            <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium">Login</button>
-                            <p id="login-error" class="text-red-500 text-sm mt-2 text-center hidden"></p>
-                        </form>
+                        <h2 class="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                        <p class="text-white/80">Please sign in to continue</p>
                     </div>
-                </div>
-            </section>
 
-            <section id="landing-page" class="hidden">
-                 <div class="text-center py-16">
-                    <h1 class="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-6">Smart Certificate Verifier</h1>
-                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">Upload a document to extract key information and check for tampering using AI.</p>
-                    <button id="upload-cert-btn" class="px-8 py-4 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-300 font-medium">
-                        Verify Document
+                    <!-- Login Form -->
+                    <form id="login-form" class="space-y-6">
+                        <!-- Email Field -->
+                        <div class="relative animate-fade-in-up animate-delay-200">
+                            <input type="email" id="email" name="email" required class="peer w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-transparent focus:outline-none focus:border-blue-400 focus-enhanced" placeholder="Email address">
+                            <label for="email" class="absolute left-4 top-3 text-white/70 transition-all duration-300 pointer-events-none">Email address</label>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="relative animate-fade-in-up animate-delay-300">
+                            <input type="password" id="password" name="password" required class="peer w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-transparent focus:outline-none focus:border-blue-400 focus-enhanced" placeholder="Password">
+                            <label for="password" class="absolute left-4 top-3 text-white/70 transition-all duration-300 pointer-events-none">Password</label>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="login-error" class="text-red-300 text-sm text-center hidden message-slide-in"></div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-300 btn-hover-lift ripple animate-fade-in-up animate-delay-400">
+                            Sign In
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- LANDING PAGE -->
+        <section id="landing-page" class="min-h-screen pt-16 hidden">
+            <!-- Particles Background -->
+            <div class="particles-container">
+                <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+                <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+                <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
+                <div class="particle" style="left: 40%; animation-delay: 1s;"></div>
+                <div class="particle" style="left: 50%; animation-delay: 3s;"></div>
+                <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
+                <div class="particle" style="left: 70%; animation-delay: 1.5s;"></div>
+                <div class="particle" style="left: 80%; animation-delay: 3.5s;"></div>
+                <div class="particle" style="left: 90%; animation-delay: 0.5s;"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+                <!-- Hero Section -->
+                <div class="text-center mb-16 animate-fade-in-up">
+                    <h1 class="text-5xl sm:text-6xl font-bold mb-6">
+                        <span class="text-gradient-animated">Smart Certificate</span><br>
+                        <span class="text-gray-800 dark:text-white">Verifier</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto animate-fade-in-up animate-delay-200">
+                        Upload a document to extract key information and check for tampering using advanced AI technology. 
+                        Secure, fast, and reliable document verification at your fingertips.
+                    </p>
+                    <button onclick="navigateTo('upload')" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 btn-hover-lift ripple animate-bounce-in animate-delay-400 animate-glow">
+                        Start Verification
+                        <svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
                     </button>
-                    <div class="mt-20 max-w-4xl mx-auto">
-                        <h2 class="text-2xl font-bold mb-8 text-gray-800 dark:text-white">How It Works in 3 Simple Steps</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                                <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                </div>
-                                <h3 class="text-lg font-semibold mb-2">1. Upload Document</h3>
-                                <p class="text-gray-600 dark:text-gray-400">Select or drag & drop a PDF or image file of the document.</p>
+                </div>
+
+                <!-- How It Works Section -->
+                <div class="mb-16">
+                    <h2 class="text-3xl font-bold text-center mb-12 animate-fade-in-up">How It Works in 3 Simple Steps</h2>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <!-- Step 1 -->
+                        <div class="text-center group animate-fade-in-up animate-delay-200 card-hover">
+                            <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 animate-float">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
                             </div>
-                            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                                <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10l.01.01"></path></svg>
-                                </div>
-                                <h3 class="text-lg font-semibold mb-2">2. AI Analysis</h3>
-                                <p class="text-gray-600 dark:text-gray-400">Our AI extracts data, scans for QR codes, and checks for tampering.</p>
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Upload Document</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Select or drag & drop a PDF or image file of the document you want to verify.</p>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="text-center group animate-fade-in-up animate-delay-400 card-hover">
+                            <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 animate-float animate-delay-200">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
                             </div>
-                            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                                <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                                <h3 class="text-lg font-semibold mb-2">3. Review Results</h3>
-                                <p class="text-gray-600 dark:text-gray-400">Get an instant, detailed report including verification status and a tamper score.</p>
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">AI Analysis</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Our AI extracts data, scans for QR codes, and performs comprehensive tamper detection.</p>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="text-center group animate-fade-in-up animate-delay-600 card-hover">
+                            <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 animate-float animate-delay-400">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
                             </div>
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Review Results</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Get an instant, detailed report including verification status and comprehensive analysis.</p>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <section id="upload-page" class="hidden">
-                 <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border dark:border-gray-700">
-                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">Upload Document</h2>
-                    <div class="space-y-6">
-                        <div id="drop-zone" class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-gray-700">
-                            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
-                            <div id="drop-zone-content"></div>
+                <!-- Features Section -->
+                <div class="grid md:grid-cols-2 gap-8 mb-16">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl card-hover animate-fade-in-left">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-semibold text-gray-800 dark:text-white">Secure Processing</h3>
                         </div>
-                        <div id="upload-page-actions" class="flex flex-col sm:flex-row gap-4">
-                            <button id="verify-btn" class="w-full py-3 rounded-md text-white font-medium transition bg-gray-400 cursor-not-allowed" disabled>
-                                <span id="verify-btn-text">Analyze & Verify</span>
-                                <div id="loader" class="hidden items-center justify-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    Processing...
+                        <p class="text-gray-600 dark:text-gray-300">Your documents are processed with enterprise-grade security and never stored permanently on our servers.</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl card-hover animate-fade-in-right">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-semibold text-gray-800 dark:text-white">Lightning Fast</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300">Get verification results in seconds with our optimized AI processing pipeline and intelligent caching system.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UPLOAD PAGE -->
+        <section id="upload-page" class="min-h-screen pt-16 hidden">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="text-center mb-12 animate-fade-in-up">
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-4">Upload Document</h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300">Select a document to verify its authenticity</p>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-scale-in">
+                    <!-- Drop Zone -->
+                    <div id="drop-zone" class="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all duration-300 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-gray-700 drop-zone-enhanced">
+                        <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                        <div id="drop-zone-content">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-xl text-gray-500 dark:text-gray-400 mb-2 font-medium">Drag & Drop document</p>
+                            <p class="text-gray-400 dark:text-gray-500 mb-4">or click to browse</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Supports PDF, PNG, JPG files</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                        <button id="verify-btn" disabled class="flex-1 py-4 rounded-xl text-white font-semibold transition-all duration-300 bg-gray-400 cursor-not-allowed btn-hover-lift ripple">
+                            <span id="verify-btn-text">Select a file to verify</span>
+                            <div id="loader" class="hidden justify-center">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white spinner-enhanced"></div>
+                            </div>
+                        </button>
+
+                        <button id="view-result-btn" class="flex-1 py-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all duration-300 hidden btn-hover-lift ripple">
+                            View Last Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESULTS PAGE -->
+        <section id="results-page" class="min-h-screen pt-16 hidden">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- Cache Indicator -->
+                <div id="cache-indicator" class="mb-6 text-center hidden">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 animate-fade-in">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Retrieved from cache
+                    </span>
+                </div>
+
+                <div class="text-center mb-12 animate-fade-in-up">
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-4">Verification Results</h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300">Comprehensive analysis of your document</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Verification Status -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-scale-in">
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            Verification Status
+                        </h2>
+                        <div class="text-center">
+                            <p id="result-status-text" class="text-3xl font-bold text-green-600 dark:text-green-400 status-badge">Document Verified</p>
+                        </div>
+                    </div>
+
+                    <!-- QR Code Section -->
+                    <div id="qr-code-section" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 hidden animate-fade-in-up animate-delay-200">
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+                                </svg>
+                            </div>
+                            QR Code Scanned Successfully
+                        </h2>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                            <h3 class="font-semibold text-gray-800 dark:text-white mb-2">Decoded Data:</h3>
+                            <p id="qr-code-result" class="text-gray-600 dark:text-gray-300 font-mono text-sm break-all bg-white dark:bg-gray-800 p-3 rounded border"></p>
+                        </div>
+                    </div>
+
+                    <!-- Tamper Analysis -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-fade-in-up animate-delay-300">
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            AI Tamper Analysis
+                        </h2>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="text-center">
+                                <p class="text-lg text-gray-600 dark:text-gray-300 mb-2">Tamper Score</p>
+                                <p id="result-tamper-score" class="font-bold text-2xl text-green-600 dark:text-green-400">15 / 100</p>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mt-4">
+                                    <div class="bg-gradient-to-r from-green-500 to-teal-500 h-3 rounded-full progress-animated" style="width: 15%"></div>
                                 </div>
-                            </button>
-                            <button id="view-result-btn" class="hidden w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-white font-medium transition">
-                                View Last Result
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="results-page" class="hidden">
-                 <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border dark:border-gray-700">
-                    <div class="p-6 md:p-8">
-                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4 text-center">Verification Results</h2>
-                        <div id="cache-indicator" class="hidden text-sm text-center text-gray-600 dark:text-gray-300 mb-4 p-2 bg-blue-100 dark:bg-blue-900/50 rounded-md border border-blue-200 dark:border-blue-700"></div>
-                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6 mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Verification Status</h3>
-                            <p id="result-status-text" class="text-2xl font-bold"></p>
-                        </div>
-
-                        <div id="qr-code-section" class="hidden border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6">
-                            <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-200 flex items-center gap-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"></path></svg>
-                                QR Code Scanned Successfully
-                            </h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Decoded Data:</p>
-                            <p id="qr-code-result" class="text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded mt-1 break-all"></p>
-                        </div>
-
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
-                            <h3 class="text-lg font-semibold mb-4 border-b pb-2 dark:border-gray-600">AI Tamper Analysis</h3>
-                            <div class="flex justify-between items-center">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Tamper Score</p>
-                                <p id="result-tamper-score" class="font-bold text-xl"></p>
                             </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-4">AI Summary:</p>
-                            <p id="result-analysis-summary" class="text-sm text-gray-800 dark:text-gray-200 italic mt-1"></p>
-                        </div>
-
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
-                            <h3 class="text-lg font-semibold mb-4 border-b pb-2 dark:border-gray-600">Extracted Details (from OCR)</h3>
-                            <div id="dynamic-details-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Data will be dynamically inserted here by JS -->
+                            <div>
+                                <p class="text-lg text-gray-600 dark:text-gray-300 mb-2">AI Summary:</p>
+                                <p id="result-analysis-summary" class="text-gray-800 dark:text-white bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">Analysis results will appear here...</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <button id="verify-another-btn" class="flex-1 py-3 bg-white dark:bg-gray-800 border border-blue-600 text-blue-600 dark:text-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-gray-700 transition font-medium">Verify Another</button>
-                            <button id="download-pdf-btn" class="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-medium transition rounded-md">Download PDF Report</button>
+                    <!-- Extracted Details -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-fade-in-up animate-delay-400">
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            Extracted Details (from OCR)
+                        </h2>
+                        <div id="dynamic-details-container" class="grid md:grid-cols-2 gap-4">
+                            <!-- Dynamic content populated by JavaScript -->
                         </div>
                     </div>
-                </div>
-            </section>
 
-             <section id="history-page" class="hidden">
-                 <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8 border dark:border-gray-700">
-                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">Verification History</h2>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                        <input type="text" id="history-search" class="w-full px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by name or doc number...">
-                        <select id="history-filter" class="w-full sm:w-48 px-4 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 animate-fade-in-up animate-delay-500">
+                        <button id="verify-another-btn" class="flex-1 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 btn-hover-lift ripple">
+                            Verify Another Document
+                        </button>
+                        <button id="download-pdf-btn" class="flex-1 py-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all duration-300 btn-hover-lift ripple">
+                            Download PDF Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORY PAGE -->
+        <section id="history-page" class="min-h-screen pt-16 hidden">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="text-center mb-12 animate-fade-in-up">
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-4">Verification History</h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300">Track all your document verifications</p>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 animate-scale-in">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" id="history-search" placeholder="Search by name or document number..." class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 search-enhanced">
+                        </div>
+                        <select id="history-filter" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="all">All Statuses</option>
                             <option value="Verified">Verified</option>
-                            <option value="Record Not Found">Not Found</option>
+                            <option value="Not Verified">Not Verified</option>
                         </select>
                     </div>
-                    <div id="history-list" class="space-y-4">
-                         <p id="no-history-msg" class="text-center text-gray-500 dark:text-gray-400">No verification history found.</p>
+                </div>
+
+                <!-- History List -->
+                <div class="space-y-4" id="history-list">
+                    <!-- Dynamic content populated by JavaScript -->
+                </div>
+
+                <div id="no-history-msg" class="text-center py-12 animate-fade-in">
+                    <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 dark:text-white mb-2">No verification history found</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">Start by verifying your first document</p>
+                    <button onclick="navigateTo('upload')" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 btn-hover-lift">
+                        Upload Document
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN DASHBOARD -->
+        <section id="admin-dashboard-page" class="min-h-screen pt-16 hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="text-center mb-12 animate-fade-in-up">
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-4">Admin Dashboard</h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300">System overview and management</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid md:grid-cols-3 gap-8 mb-12">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-xl card-hover animate-scale-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Total Verifications</h3>
+                                <p id="admin-total-verifications" class="text-4xl font-bold stat-counter">--</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-8 text-white shadow-xl card-hover animate-scale-in animate-delay-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">High-Risk Alerts</h3>
+                                <p id="admin-high-risk-alerts" class="text-4xl font-bold stat-counter">--</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-8 text-white shadow-xl card-hover animate-scale-in animate-delay-400">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Support Tickets</h3>
+                                <p id="admin-support-tickets" class="text-4xl font-bold stat-counter">--</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 109.75 9.75 9.75 9.75 0 00-9.75-9.75z"></path>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </section>
 
-            <section id="admin-dashboard-page" class="hidden">
-                <div class="max-w-4xl mx-auto">
-                    <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                            <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Total Verifications</h2>
-                            <p id="admin-total-verifications" class="text-4xl font-bold mt-2">--</p>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                            <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-400">High-Risk Alerts</h2>
-                            <p id="admin-high-risk-alerts" class="text-4xl font-bold mt-2 text-red-500">--</p>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                             <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Open Support Tickets</h2>
-                            <p id="admin-support-tickets" class="text-4xl font-bold mt-2 text-yellow-500">--</p>
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-fade-in-up">
+                    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Quick Actions</h2>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button class="p-4 text-left bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors btn-hover-lift">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-gray-800 dark:text-white">User Management</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Manage user accounts and permissions</p>
+                        </button>
+
+                        <button class="p-4 text-left bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors btn-hover-lift">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-gray-800 dark:text-white">System Reports</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Generate detailed system reports</p>
+                        </button>
+
+                        <button class="p-4 text-left bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors btn-hover-lift">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-gray-800 dark:text-white">System Settings</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Configure system parameters</p>
+                        </button>
+
+                        <button class="p-4 text-left bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors btn-hover-lift">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-gray-800 dark:text-white">Security Alerts</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Monitor security incidents</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INSTITUTION DASHBOARD -->
+        <section id="institution-dashboard-page" class="min-h-screen pt-16 hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="text-center mb-12 animate-fade-in-up">
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-4">Institution Dashboard</h1>
+                    <h2 id="inst-name" class="text-2xl text-gray-600 dark:text-gray-300">--</h2>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-xl card-hover animate-scale-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Verifications Today</h3>
+                                <p id="inst-verifications-today" class="text-4xl font-bold stat-counter">--</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-8">
-                        <h2 class="text-xl font-bold mb-4">Actions</h2>
-                        <div class="space-x-4">
-                            <button class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Manage Users</button>
-                            <button class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">View Alerts Log</button>
+
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-8 text-white shadow-xl card-hover animate-scale-in animate-delay-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Total Records in DB</h3>
+                                <p id="inst-total-records" class="text-4xl font-bold stat-counter">--</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <section id="institution-dashboard-page" class="hidden">
-                 <div class="max-w-4xl mx-auto">
-                    <h1 class="text-3xl font-bold mb-2">Institution Dashboard</h1>
-                    <p id="inst-name" class="text-lg text-gray-500 dark:text-gray-400 mb-6"></p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                            <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Verifications Today</h2>
-                            <p id="inst-verifications-today" class="text-4xl font-bold mt-2">--</p>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700">
-                            <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Total Records in DB</h2>
-                            <p id="inst-total-records" class="text-4xl font-bold mt-2">--</p>
-                        </div>
-                    </div>
-                     <div class="mt-8">
-                        <h2 class="text-xl font-bold mb-4">Actions</h2>
-                        <button class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Bulk Upload Student Data (CSV)</button>
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-fade-in-up">
+                    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Quick Actions</h2>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <button class="p-6 text-left bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900/50 dark:hover:to-blue-800/50 transition-all btn-hover-lift">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg font-semibold text-gray-800 dark:text-white">Bulk Upload</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300">Upload multiple certificates at once</p>
+                        </button>
+
+                        <button class="p-6 text-left bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-xl hover:from-green-100 hover:to-green-200 dark:hover:from-green-900/50 dark:hover:to-green-800/50 transition-all btn-hover-lift">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg font-semibold text-gray-800 dark:text-white">Analytics</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300">View detailed analytics and reports</p>
+                        </button>
+
+                        <button class="p-6 text-left bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-900/50 dark:hover:to-purple-800/50 transition-all btn-hover-lift">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg font-semibold text-gray-800 dark:text-white">Settings</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300">Manage institution preferences</p>
+                        </button>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
+    </main>
 
-        </main>
-    </div>
-
-    <footer class="bg-white dark:bg-gray-800 border-t dark:border-gray-700 py-8 mt-16 text-sm text-gray-600 dark:text-gray-400">
-         <div class="container mx-auto px-4 text-center">
-            <p>Developed by Yogesh Kumar</p>
-            <p>Satyug Darshan Institute of Engineering and Technology</p>
-            <p><a href="mailto:yogeshkumar@gmail.com" class="hover:text-blue-500">yogeshkumar@gmail.com</a></p>
-            <div class="mt-4 border-t dark:border-gray-600 pt-4 text-xs text-gray-500">
-                 &copy; 2025 ProofPoint. All rights reserved.
+    <!-- Enhanced Error Modal -->
+    <div id="error-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-scale-in">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Error</h3>
+                </div>
+                <p id="error-message" class="text-gray-600 dark:text-gray-300 mb-6">An error occurred.</p>
+                <button id="close-error-modal" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors btn-hover-lift">
+                    Close
+                </button>
             </div>
         </div>
-    </footer>
+    </div>
 
-    <button id="contact-fab" class="hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition transform hover:scale-110">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+    <!-- Enhanced Contact Modal -->
+    <div id="contact-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden modal-backdrop">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-scale-in">
+            <div class="p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Contact Support</h3>
+                </div>
+
+                <form id="contact-form" class="space-y-4">
+                    <textarea id="contact-textarea" rows="4" placeholder="Describe your issue or question..." class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none focus-enhanced"></textarea>
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors btn-hover-lift">
+                            Send Message
+                        </button>
+                        <button id="close-contact-modal" type="button" class="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors btn-hover-lift">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+
+                <div id="contact-success" class="text-center text-green-600 dark:text-green-400 mt-4 hidden">
+                    <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="font-medium">Message sent successfully!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Floating Action Button -->
+    <button id="contact-fab" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-2xl flex items-center justify-center z-40 transition-all duration-300 btn-hover-lift animate-bounce-in hidden" data-tooltip="Contact Support">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
     </button>
-    <div id="contact-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div id="contact-modal-content" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full animate-slide-up">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">Contact Support</h3><button id="close-contact-modal" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Send us a message and we'll get back to you.</p>
-            <form id="contact-form">
-                <textarea id="contact-textarea" rows="4" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message..."></textarea>
-                <button type="submit" class="mt-4 w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Submit Ticket</button>
-                <p id="contact-success" class="text-green-500 text-sm mt-2 text-center hidden">Message sent!</p>
-            </form>
-        </div>
-    </div>
 
-    <div id="error-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full animate-slide-up">
-            <h3 class="text-lg font-bold text-red-700">Error</h3>
-            <p id="error-message" class="text-gray-600 dark:text-gray-300 mt-2">An unexpected error occurred.</p>
-            <button id="close-error-modal" class="mt-4 w-full py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Close</button>
-        </div>
-    </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="script.js"></script>
 </body>
 </html>
-
